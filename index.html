@@ -43,6 +43,11 @@
                 <div class="slides">
                     <img src="img/slide1.jpg" alt="Slide 1">
                     <img src="img/slide2.jpg" alt="Slide 2">
+                    <img src="img/slide3.jpg" alt="Slide 3">
+                    <img src="img/slide4.jpg" alt="Slide 4">
+                    <img src="img/slide5.jpg" alt="Slide 5">
+                    <img src="img/slide6.jpg" alt="Slide 6">
+                    <img src="img/slide7.jpg" alt="Slide 7">
                 </div>
                 <!-- Кнопки переключения -->
                 <button class="prev" onclick="prevSlide()">&#10094;</button>
@@ -178,25 +183,87 @@
     <!-- JS часть для анимации-->
     <script>
         let currentSlide = 0;
+        let isTransitioning = false;
         const slides = document.querySelector('.slides');
-        const totalSlides = document.querySelectorAll('.slides img').length;
-
-        function showSlide(index) {
-            currentSlide = (index + totalSlides) % totalSlides;
-            const offset = -currentSlide * 100;
-            slides.style.transform = `translateX(${offset}%)`;
+        const slideItems = document.querySelectorAll('.slides img');
+        const totalSlides = slideItems.length;
+    
+        // Клонируем первый и последний слайды
+        const firstClone = slideItems[0].cloneNode(true);
+        const lastClone = slideItems[totalSlides - 1].cloneNode(true);
+        
+        // Добавляем клоны в карусель
+        slides.appendChild(firstClone);
+        slides.insertBefore(lastClone, slideItems[0]);
+    
+        // Обновляем коллекцию слайдов
+        const allSlides = document.querySelectorAll('.slides img');
+        
+        // Устанавливаем начальную позицию (настоящий первый слайд)
+        slides.style.transform = `translateX(-100%)`;
+    
+        function goToSlide(index, withAnimation = true) {
+            if (isTransitioning) return;
+            isTransitioning = true;
+            
+            slides.style.transition = withAnimation ? 'transform 1.5s ease-in-out' : 'none';
+            currentSlide = index;
+            slides.style.transform = `translateX(-${currentSlide * 100}%)`;
+            
+            if (withAnimation) {
+                setTimeout(() => {
+                    isTransitioning = false;
+                }, 1500);
+            } else {
+                isTransitioning = false;
+            }
         }
-
+    
         function nextSlide() {
-            showSlide(currentSlide + 1);
+            if (currentSlide >= allSlides.length - 1) {
+                // Мгновенно переходим к первому слайду без анимации
+                goToSlide(1, false);
+                // Даем браузеру время на отрисовку
+                setTimeout(() => {
+                    goToSlide(2, true);
+                }, 50);
+            } else {
+                goToSlide(currentSlide + 1, true);
+            }
         }
-
+    
         function prevSlide() {
-            showSlide(currentSlide - 1);
+            if (currentSlide <= 0) {
+                // Мгновенно переходим к последнему слайду без анимации
+                goToSlide(allSlides.length - 2, false);
+                // Даем браузеру время на отрисовку
+                setTimeout(() => {
+                    goToSlide(allSlides.length - 3, true);
+                }, 50);
+            } else {
+                goToSlide(currentSlide - 1, true);
+            }
         }
-
-        // Автоматическое переключение каждые 15 секунд
+    
+        // Автоматическое переключение
         setInterval(nextSlide, 15000);
+    
+        // Обработчик для сброса позиции после анимации
+        slides.addEventListener('transitionend', () => {
+            if (currentSlide === 0) {
+                // Если достигли клона последнего слайда, переходим к настоящему последнему
+                goToSlide(allSlides.length - 2, false);
+            } else if (currentSlide === allSlides.length - 1) {
+                // Если достигли клона первого слайда, переходим к настоящему первому
+                goToSlide(1, false);
+            }
+        });
+    
+        // Сброс при ресайзе
+        window.addEventListener('resize', () => {
+            slides.style.transition = 'none';
+            slides.style.transform = `translateX(-${currentSlide * 100}%)`;
+        });
     </script>
 </body>
 </html>
